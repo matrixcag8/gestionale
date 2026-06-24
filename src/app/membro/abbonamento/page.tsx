@@ -17,12 +17,12 @@ export default async function AbbonamentoPage() {
 
   if (!subscription) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-16 sm:py-20 px-2">
         <div className="text-5xl mb-4">📋</div>
-        <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#fffcf2" }}>
+        <h1 className="text-xl sm:text-2xl font-extrabold mb-2" style={{ color: "#fffcf2" }}>
           Nessun abbonamento attivo
         </h1>
-        <p style={{ color: "rgba(255,252,242,0.45)" }}>
+        <p className="text-sm sm:text-base" style={{ color: "rgba(255,252,242,0.45)" }}>
           Contatta la palestra per attivare il tuo abbonamento.
         </p>
       </div>
@@ -42,29 +42,33 @@ export default async function AbbonamentoPage() {
     ...Object.fromEntries(bookingStats.map((s) => [s.stato, s._count])),
   };
 
+  const orderedSlots = [...subscription.slots].sort(
+    (a, b) => a.slot.giornoSettimana - b.slot.giornoSettimana || a.slot.oraInizio.localeCompare(b.slot.oraInizio)
+  );
+
   return (
-    <div>
-      <div className="mb-6">
+    <div className="max-w-5xl mx-auto">
+      <div className="mb-5 sm:mb-6 px-1">
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,252,242,0.4)" }}>Area personale</p>
-        <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: "#fffcf2" }}>Il mio abbonamento</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#fffcf2" }}>Il mio abbonamento</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
         {/* Dettagli */}
-        <div className="glass p-6">
-          <h2 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Dettagli</h2>
-          <div className="space-y-3 text-sm">
+        <div className="glass p-4 sm:p-6" style={{ borderColor: "rgba(13,148,136,0.28)" }}>
+          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Dettagli</h2>
+          <div className="space-y-2.5 sm:space-y-3 text-sm">
             {[
               { label: "Tipo", value: subscription.tipo === "DUE_LEZIONI" ? "2 lezioni a settimana" : "3 lezioni a settimana" },
               { label: "Data inizio", value: format(new Date(subscription.dataInizio), "dd MMMM yyyy", { locale: it }) },
               { label: "Data fine", value: format(new Date(subscription.dataFine), "dd MMMM yyyy", { locale: it }) },
             ].map((r) => (
-              <div key={r.label} className="flex justify-between items-center py-2" style={{ borderBottom: "1px solid rgba(255,252,242,0.07)" }}>
+              <div key={r.label} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2" style={{ borderBottom: "1px solid rgba(255,252,242,0.07)" }}>
                 <span style={{ color: "rgba(255,252,242,0.45)" }}>{r.label}</span>
-                <span className="font-semibold" style={{ color: "#fffcf2" }}>{r.value}</span>
+                <span className="font-semibold leading-tight sm:text-right" style={{ color: "#fffcf2" }}>{r.value}</span>
               </div>
             ))}
-            <div className="flex justify-between items-center pt-1">
+            <div className="flex justify-between items-center pt-1.5">
               <span style={{ color: "rgba(255,252,242,0.45)" }}>Stato</span>
               <span className={`badge ${subscription.attivo ? "badge-green" : "badge-red"}`}>
                 {subscription.attivo ? "Attivo ✓" : "Scaduto"}
@@ -74,40 +78,40 @@ export default async function AbbonamentoPage() {
         </div>
 
         {/* Statistiche */}
-        <div className="glass p-6">
-          <h2 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Statistiche</h2>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-xl p-4" style={{ background: "rgba(13,148,136,0.12)", border: "1px solid rgba(13,148,136,0.2)" }}>
-              <p className="text-2xl font-extrabold" style={{ color: "#60a5fa" }}>{stats.CONFERMATO}</p>
-              <p className="text-xs mt-1" style={{ color: "rgba(255,252,242,0.4)" }}>Programmate</p>
+        <div className="glass p-4 sm:p-6" style={{ borderColor: "rgba(13,148,136,0.28)" }}>
+          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Statistiche</h2>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+            <div className="rounded-xl p-3 sm:p-4" style={{ background: "rgba(13,148,136,0.12)", border: "1px solid rgba(13,148,136,0.24)" }}>
+              <p className="text-xl sm:text-2xl font-extrabold" style={{ color: "#60a5fa" }}>{stats.CONFERMATO}</p>
+              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "rgba(255,252,242,0.4)" }}>Programmate</p>
             </div>
-            <div className="rounded-xl p-4" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
-              <p className="text-2xl font-extrabold" style={{ color: "#4ade80" }}>{stats.PRESENTE}</p>
-              <p className="text-xs mt-1" style={{ color: "rgba(255,252,242,0.4)" }}>Frequentate</p>
+            <div className="rounded-xl p-3 sm:p-4" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.24)" }}>
+              <p className="text-xl sm:text-2xl font-extrabold" style={{ color: "#4ade80" }}>{stats.PRESENTE}</p>
+              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "rgba(255,252,242,0.4)" }}>Frequentate</p>
             </div>
-            <div className="rounded-xl p-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
-              <p className="text-2xl font-extrabold" style={{ color: "#f87171" }}>{stats.CANCELLATO}</p>
-              <p className="text-xs mt-1" style={{ color: "rgba(255,252,242,0.4)" }}>Cancellate</p>
+            <div className="rounded-xl p-3 sm:p-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.24)" }}>
+              <p className="text-xl sm:text-2xl font-extrabold" style={{ color: "#f87171" }}>{stats.CANCELLATO}</p>
+              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "rgba(255,252,242,0.4)" }}>Cancellate</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="glass p-6">
-        <h2 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Slot fissi settimanali</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {subscription.slots.map((ss) => (
+      <div className="glass p-4 sm:p-6" style={{ borderColor: "rgba(13,148,136,0.28)" }}>
+        <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Slot fissi settimanali</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
+          {orderedSlots.map((ss) => (
             <div
               key={ss.slotId}
-              className="flex items-center gap-3 rounded-xl px-4 py-3"
-              style={{ background: "rgba(13,148,136,0.1)", border: "1px solid rgba(13,148,136,0.2)" }}
+              className="flex items-center gap-3 rounded-2xl px-3.5 py-3"
+              style={{ background: "rgba(13,148,136,0.1)", border: "1px solid rgba(13,148,136,0.24)" }}
             >
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
                 style={{ background: "rgba(13,148,136,0.25)", color: "#5eead4" }}>
                 {GIORNI[ss.slot.giornoSettimana].slice(0, 3)}
               </div>
               <div>
-                <p className="font-semibold text-sm" style={{ color: "#fffcf2" }}>
+                <p className="font-semibold text-sm leading-tight" style={{ color: "#fffcf2" }}>
                   {GIORNI[ss.slot.giornoSettimana]}
                 </p>
                 <p className="text-xs" style={{ color: "rgba(255,252,242,0.55)" }}>
@@ -117,7 +121,7 @@ export default async function AbbonamentoPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs mt-4" style={{ color: "rgba(255,252,242,0.35)" }}>
+        <p className="text-xs mt-4 leading-relaxed" style={{ color: "rgba(255,252,242,0.35)" }}>
           Per cambiare i tuoi slot fissi contatta la palestra oppure modifica le singole lezioni dal calendario.
         </p>
       </div>

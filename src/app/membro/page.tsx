@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { endOfWeek, startOfWeek } from "date-fns";
 import { GIORNI } from "@/lib/booking";
 import MembroNotifications from "@/components/MembroNotifications";
 
@@ -31,12 +32,24 @@ export default async function MembroDashboard() {
     orderBy: { data: "asc" },
   });
 
-  const lessonCount = await prisma.booking.count({
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+  const weeklyBookedLessons = await prisma.booking.count({
     where: {
       subscription: { userId: session.userId },
-      stato: "PRESENTE",
+      stato: { in: ["CONFERMATO", "PRESENTE"] },
+      data: {
+        gte: weekStart,
+        lte: weekEnd,
+      },
     },
   });
+
+  const weeklyLimit = user?.subscription?.tipo === "TRE_LEZIONI" ? 3 : user?.subscription?.tipo === "DUE_LEZIONI" ? 2 : 0;
+  const lezioniRimanenti = Math.max(0, weeklyLimit - weeklyBookedLessons);
+  const slotFissiBloccati = user?.subscription?.slots.length ?? 0;
 
   return (
     <div>
@@ -52,36 +65,16 @@ export default async function MembroDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Abbonamento */}
-        <div className="glass p-5" style={{ borderLeft: "3px solid #0d9488" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Abbonamento</p>
-          {user?.subscription ? (
-            <>
-              <p className="text-lg font-extrabold" style={{ color: "#60a5fa" }}>
-                {user.subscription.tipo === "DUE_LEZIONI" ? "2 lezioni/sett." : "3 lezioni/sett."}
-              </p>
-              <p className="text-xs mt-1" style={{ color: "rgba(255,252,242,0.45)" }}>
-                Scade: {format(new Date(user.subscription.dataFine), "dd MMMM yyyy", { locale: it })}
-              </p>
-              <span className={`badge mt-2 ${user.subscription.attivo ? "badge-green" : "badge-gray"}`}>
-                {user.subscription.attivo ? "Attivo" : "Scaduto"}
-              </span>
-            </>
-          ) : (
-            <p style={{ color: "rgba(255,252,242,0.4)" }}>Nessun abbonamento</p>
-          )}
-        </div>
-
         {/* Prossima lezione */}
-        <div className="glass p-5" style={{ borderLeft: "3px solid #22c55e" }}>
+        <div className="glass p-5" style={{ borderLeft: "3px solid #0d9488" }}>
           <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Prossima lezione</p>
           {prossimaLezione ? (
             <>
-              <p className="text-lg font-extrabold capitalize" style={{ color: "#4ade80" }}>
+              <p className="text-lg font-extrabold capitalize" style={{ color: "#60a5fa" }}>
                 {format(new Date(prossimaLezione.data), "EEEE dd MMM", { locale: it })}
               </p>
               <p className="text-sm mt-0.5" style={{ color: "rgba(255,252,242,0.6)" }}>
-                {prossimaLezione.slot.oraInizio} – {prossimaLezione.slot.oraFine}
+                {prossimaLezione.slot.oraInizio} - {prossimaLezione.slot.oraFine}
               </p>
             </>
           ) : (
@@ -89,11 +82,28 @@ export default async function MembroDashboard() {
           )}
         </div>
 
-        {/* Presenze */}
+        {/* Lezioni rimanenti e scadenza */}
+        <div className="glass p-5" style={{ borderLeft: "3px solid #22c55e" }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Lezioni rimanenti</p>
+          {user?.subscription ? (
+            <>
+              <p className="text-3xl font-extrabold" style={{ color: "#4ade80" }}>
+                {lezioniRimanenti}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "rgba(255,252,242,0.45)" }}>
+                Scade: {format(new Date(user.subscription.dataFine), "dd MMMM yyyy", { locale: it })}
+              </p>
+            </>
+          ) : (
+            <p style={{ color: "rgba(255,252,242,0.4)" }}>Nessun abbonamento</p>
+          )}
+        </div>
+
+        {/* Slot fissi bloccati */}
         <div className="glass p-5" style={{ borderLeft: "3px solid #a855f7" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Lezioni frequentate</p>
-          <p className="text-3xl font-extrabold" style={{ color: "#c084fc" }}>{lessonCount}</p>
-          <p className="text-xs mt-0.5" style={{ color: "rgba(255,252,242,0.4)" }}>Presenze registrate</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Slot fissi bloccati</p>
+          <p className="text-3xl font-extrabold" style={{ color: "#c084fc" }}>{slotFissiBloccati}</p>
+          <p className="text-xs mt-0.5" style={{ color: "rgba(255,252,242,0.4)" }}>Slot settimanali assegnati</p>
         </div>
       </div>
 

@@ -14,7 +14,12 @@ export default async function MembroLayout({
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#1c1917" }}>
       <MembroNavbar nome={session.nome} cognome={session.cognome} />
-      <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
+      <main
+        className="flex-1 container mx-auto w-full px-3 sm:px-4 py-5 sm:py-8"
+        style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
+      >
+        {children}
+      </main>
     </div>
   );
 }
