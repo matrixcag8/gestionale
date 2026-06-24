@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  cognome      String
+  email        String        @unique
+  passwordHash String
+  telefono     String?
+  role         String        @default("MEMBRO")
+  createdAt    DateTime      @default(now())
+  subscription Subscription?
+  notifications Notification[]
+}
+
+model Subscription {
+  id           Int               @id @default(autoincrement())
+  userId       Int               @unique
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipo         String
+  dataInizio   DateTime
+  dataFine     DateTime
+  attivo       Boolean           @default(true)
+  slots        SubscriptionSlot[]
+  bookings     Booking[]
+  createdAt    DateTime          @default(now())
+}
+
+model TimeSlot {
+  id              Int               @id @default(autoincrement())
+  giornoSettimana Int
+  oraInizio       String
+  oraFine         String
+  maxPartecipanti Int               @default(15)
+  attivo          Boolean           @default(true)
+  subscriptions   SubscriptionSlot[]
+  bookings        Booking[]
+}
+
+model SubscriptionSlot {
+  id             Int          @id @default(autoincrement())
+  subscriptionId Int
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  slotId         Int
+  slot           TimeSlot     @relation(fields: [slotId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([subscriptionId, slotId])
+}
+
+model Booking {
+  id             Int          @id @default(autoincrement())
+  subscriptionId Int
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  slotId         Int
+  slot           TimeSlot     @relation(fields: [slotId], references: [id])
+  data           DateTime
+  stato          String       @default("CONFERMATO")
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titolo    String
+  messaggio String
+  letto     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
