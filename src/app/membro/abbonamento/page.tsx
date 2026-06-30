@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { GIORNI } from "@/lib/booking";
+import { getSubscriptionLabel } from "@/lib/subscriptions";
 
 export default async function AbbonamentoPage() {
   const session = await getSession();
@@ -19,10 +20,10 @@ export default async function AbbonamentoPage() {
     return (
       <div className="text-center py-16 sm:py-20 px-2">
         <div className="text-5xl mb-4">📋</div>
-        <h1 className="text-xl sm:text-2xl font-extrabold mb-2" style={{ color: "#fffcf2" }}>
+        <h1 className="text-xl sm:text-2xl font-extrabold mb-2" style={{ color: "var(--text)" }}>
           Nessun abbonamento attivo
         </h1>
-        <p className="text-sm sm:text-base" style={{ color: "rgba(255,252,242,0.45)" }}>
+        <p className="text-sm sm:text-base" style={{ color: "var(--text-muted)" }}>
           Contatta la palestra per attivare il tuo abbonamento.
         </p>
       </div>
@@ -49,27 +50,27 @@ export default async function AbbonamentoPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-5 sm:mb-6 px-1">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,252,242,0.4)" }}>Area personale</p>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#fffcf2" }}>Il mio abbonamento</h1>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Area personale</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "var(--text)" }}>Il mio abbonamento</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
         {/* Dettagli */}
         <div className="glass p-4 sm:p-6" style={{ borderColor: "rgba(13,148,136,0.28)" }}>
-          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Dettagli</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "var(--text-muted)" }}>Dettagli</h2>
           <div className="space-y-2.5 sm:space-y-3 text-sm">
             {[
-              { label: "Tipo", value: subscription.tipo === "DUE_LEZIONI" ? "2 lezioni a settimana" : "3 lezioni a settimana" },
+              { label: "Tipo", value: getSubscriptionLabel(subscription.tipo) },
               { label: "Data inizio", value: format(new Date(subscription.dataInizio), "dd MMMM yyyy", { locale: it }) },
               { label: "Data fine", value: format(new Date(subscription.dataFine), "dd MMMM yyyy", { locale: it }) },
             ].map((r) => (
               <div key={r.label} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2" style={{ borderBottom: "1px solid rgba(255,252,242,0.07)" }}>
-                <span style={{ color: "rgba(255,252,242,0.45)" }}>{r.label}</span>
-                <span className="font-semibold leading-tight sm:text-right" style={{ color: "#fffcf2" }}>{r.value}</span>
+                <span style={{ color: "var(--text-muted)" }}>{r.label}</span>
+                <span className="font-semibold leading-tight sm:text-right" style={{ color: "var(--text)" }}>{r.value}</span>
               </div>
             ))}
             <div className="flex justify-between items-center pt-1.5">
-              <span style={{ color: "rgba(255,252,242,0.45)" }}>Stato</span>
+              <span style={{ color: "var(--text-muted)" }}>Stato</span>
               <span className={`badge ${subscription.attivo ? "badge-green" : "badge-red"}`}>
                 {subscription.attivo ? "Attivo ✓" : "Scaduto"}
               </span>
@@ -79,26 +80,26 @@ export default async function AbbonamentoPage() {
 
         {/* Statistiche */}
         <div className="glass p-4 sm:p-6" style={{ borderColor: "rgba(13,148,136,0.28)" }}>
-          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Statistiche</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "var(--text-muted)" }}>Statistiche</h2>
           <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
             <div className="rounded-xl p-3 sm:p-4" style={{ background: "rgba(13,148,136,0.12)", border: "1px solid rgba(13,148,136,0.24)" }}>
               <p className="text-xl sm:text-2xl font-extrabold" style={{ color: "#60a5fa" }}>{stats.CONFERMATO}</p>
-              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "rgba(255,252,242,0.4)" }}>Programmate</p>
+              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "var(--text-muted)" }}>Programmate</p>
             </div>
             <div className="rounded-xl p-3 sm:p-4" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.24)" }}>
               <p className="text-xl sm:text-2xl font-extrabold" style={{ color: "#4ade80" }}>{stats.PRESENTE}</p>
-              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "rgba(255,252,242,0.4)" }}>Frequentate</p>
+              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "var(--text-muted)" }}>Frequentate</p>
             </div>
             <div className="rounded-xl p-3 sm:p-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.24)" }}>
               <p className="text-xl sm:text-2xl font-extrabold" style={{ color: "#f87171" }}>{stats.CANCELLATO}</p>
-              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "rgba(255,252,242,0.4)" }}>Cancellate</p>
+              <p className="text-[11px] sm:text-xs mt-1 leading-tight" style={{ color: "var(--text-muted)" }}>Cancellate</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="glass p-4 sm:p-6" style={{ borderColor: "rgba(13,148,136,0.28)" }}>
-        <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "rgba(255,252,242,0.45)" }}>Slot fissi settimanali</h2>
+        <h2 className="text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4" style={{ color: "var(--text-muted)" }}>Sessioni fisse settimanali</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
           {orderedSlots.map((ss) => (
             <div
@@ -111,18 +112,18 @@ export default async function AbbonamentoPage() {
                 {GIORNI[ss.slot.giornoSettimana].slice(0, 3)}
               </div>
               <div>
-                <p className="font-semibold text-sm leading-tight" style={{ color: "#fffcf2" }}>
+                <p className="font-semibold text-sm leading-tight" style={{ color: "var(--text)" }}>
                   {GIORNI[ss.slot.giornoSettimana]}
                 </p>
-                <p className="text-xs" style={{ color: "rgba(255,252,242,0.55)" }}>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                   {ss.slot.oraInizio} – {ss.slot.oraFine}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        <p className="text-xs mt-4 leading-relaxed" style={{ color: "rgba(255,252,242,0.35)" }}>
-          Per cambiare i tuoi slot fissi contatta la palestra oppure modifica le singole lezioni dal calendario.
+        <p className="text-xs mt-4 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          Per cambiare le tue sessioni fisse contatta la palestra oppure modifica le singole lezioni dal calendario.
         </p>
       </div>
     </div>

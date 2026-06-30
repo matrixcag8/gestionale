@@ -1,7 +1,7 @@
 import { addDays, startOfMonth, endOfMonth, getDay } from "date-fns";
 import prisma from "./prisma";
 
-// Genera prenotazioni mensili per un abbonamento basate sui suoi slot fissi
+// Genera prenotazioni mensili per un abbonamento basate sulle sue sessioni fisse
 export async function generaBookingMensili(subscriptionId: number) {
   const sub = await prisma.subscription.findUnique({
     where: { id: subscriptionId },

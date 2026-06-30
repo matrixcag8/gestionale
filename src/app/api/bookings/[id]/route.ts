@@ -42,7 +42,11 @@ export async function PATCH(
 
     const updated = await prisma.booking.update({
       where: { id: bookingId },
-      data: { slotId: body.slotId },
+      data: {
+        slotId: body.slotId,
+        // Se il membro modifica l'orario, la lezione va in attesa conferma admin.
+        stato: session.role === "MEMBRO" ? "IN_ATTESA" : "CONFERMATO",
+      },
       include: { slot: true },
     });
 
@@ -54,9 +58,15 @@ export async function PATCH(
       );
 
       if (session.role === "MEMBRO") {
+        await creaNotifica(
+          booking.subscription.userId,
+          "Appuntamento in attesa",
+          `La nuova lezione del ${new Date(booking.data).toLocaleDateString("it-IT")} alle ${slotNuovo.oraInizio} e' in attesa di conferma admin.`
+        );
+
         await creaNotificaAdmin(
           "Cambio appuntamento membro",
-          `${booking.subscription.user.nome} ${booking.subscription.user.cognome} ha spostato la lezione del ${new Date(booking.data).toLocaleDateString("it-IT")} da ${booking.slot.oraInizio}-${booking.slot.oraFine} a ${slotNuovo.oraInizio}-${slotNuovo.oraFine}.`
+          `${booking.subscription.user.nome} ${booking.subscription.user.cognome} ha spostato la lezione del ${new Date(booking.data).toLocaleDateString("it-IT")} da ${booking.slot.oraInizio}-${booking.slot.oraFine} a ${slotNuovo.oraInizio}-${slotNuovo.oraFine}. Stato: in attesa conferma.`
         );
       }
     }
@@ -76,6 +86,14 @@ export async function PATCH(
         booking.subscription.userId,
         "Presenza registrata",
         `La presenza della lezione del ${new Date(booking.data).toLocaleDateString("it-IT")} e' stata registrata.`
+      );
+    }
+
+    if (body.stato === "CONFERMATO") {
+      await creaNotifica(
+        booking.subscription.userId,
+        "Nuovo orario confermato",
+        `La modifica della lezione del ${new Date(booking.data).toLocaleDateString("it-IT")} e' stata confermata dall'admin.`
       );
     }
 

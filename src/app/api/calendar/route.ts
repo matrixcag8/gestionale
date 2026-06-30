@@ -58,6 +58,8 @@ export async function GET(req: NextRequest) {
       backgroundColor:
         b.stato === "CANCELLATO"
           ? "#ef4444"
+          : b.stato === "IN_ATTESA"
+          ? "#f59e0b"
           : b.stato === "PRESENTE"
           ? "#22c55e"
           : "#3b82f6",

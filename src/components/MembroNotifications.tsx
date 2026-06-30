@@ -50,11 +50,11 @@ export default function MembroNotifications() {
         <div>
           <p
             className="text-xs font-semibold uppercase tracking-widest"
-            style={{ color: "rgba(255,252,242,0.4)" }}
+            style={{ color: "var(--text-muted)" }}
           >
             Notifiche
           </p>
-          <h2 className="text-lg font-extrabold" style={{ color: "#fffcf2" }}>
+          <h2 className="text-lg font-extrabold" style={{ color: "var(--text)" }}>
             Centro notifiche
           </h2>
         </div>
@@ -66,7 +66,7 @@ export default function MembroNotifications() {
             className="px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-40"
             style={{
               background: "rgba(255,252,242,0.08)",
-              color: "rgba(255,252,242,0.7)",
+              color: "var(--text)",
               border: "1px solid rgba(255,252,242,0.12)",
             }}
           >
@@ -76,11 +76,11 @@ export default function MembroNotifications() {
       </div>
 
       {loading ? (
-        <p className="text-sm" style={{ color: "rgba(255,252,242,0.5)" }}>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           Caricamento notifiche...
         </p>
       ) : items.length === 0 ? (
-        <p className="text-sm" style={{ color: "rgba(255,252,242,0.5)" }}>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           Nessuna notifica per ora.
         </p>
       ) : (
@@ -100,16 +100,16 @@ export default function MembroNotifications() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#fffcf2" }}>
+                  <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
                     {n.titolo}
                   </p>
-                  <p className="text-sm" style={{ color: "rgba(255,252,242,0.65)" }}>
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                     {n.messaggio}
                   </p>
                 </div>
                 {!n.letto && <span className="badge badge-orange">Nuova</span>}
               </div>
-              <p className="text-xs mt-2" style={{ color: "rgba(255,252,242,0.35)" }}>
+              <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
                 {formatDistanceToNow(new Date(n.createdAt), {
                   addSuffix: true,
                   locale: it,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getSubscriptionLabel } from "@/lib/subscriptions";
 
 type Member = {
   id: number;
@@ -64,7 +65,7 @@ export default function MembriPage() {
     loadMembri();
   }
 
-  const tipoLabel = (tipo: string) => tipo === "DUE_LEZIONI" ? "2 lez/sett." : "3 lez/sett.";
+  const tipoLabel = (tipo: string) => getSubscriptionLabel(tipo);
 
   return (
     <div>

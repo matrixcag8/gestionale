@@ -61,7 +61,7 @@ export default function OrariPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Disattivare questo slot?")) return;
+    if (!confirm("Disattivare questa sessione?")) return;
     await fetch(`/api/slots/${id}`, { method: "DELETE" });
     loadSlots();
   }
@@ -76,13 +76,13 @@ export default function OrariPage() {
           <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: "#fffcf2" }}>Orari Lezioni</h1>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="btn-cta text-sm">
-          {showForm ? "✕ Annulla" : "+ Nuovo Slot"}
+          {showForm ? "✕ Annulla" : "+ Nuova Sessione"}
         </button>
       </div>
 
       {showForm && (
         <div className="glass p-6 mb-6">
-          <h2 className="font-bold mb-4 text-base" style={{ color: "#fffcf2" }}>Aggiungi Slot Orario</h2>
+          <h2 className="font-bold mb-4 text-base" style={{ color: "#fffcf2" }}>Aggiungi Sessione Oraria</h2>
           <form onSubmit={handleAdd} className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label style={labelStyle}>Giorno</label>
@@ -103,7 +103,7 @@ export default function OrariPage() {
               <input type="number" min="1" max="50" value={form.maxPartecipanti} onChange={(e) => setForm({ ...form, maxPartecipanti: e.target.value })} style={inputStyle} />
             </div>
             <div className="col-span-2 md:col-span-4">
-              <button type="submit" disabled={saving} className="btn-cta text-sm">{saving ? "Salvo..." : "✓ Aggiungi Slot"}</button>
+              <button type="submit" disabled={saving} className="btn-cta text-sm">{saving ? "Salvo..." : "✓ Aggiungi Sessione"}</button>
             </div>
           </form>
         </div>
@@ -132,7 +132,7 @@ export default function OrariPage() {
             </div>
           ))}
           {slots.length === 0 && (
-            <div className="col-span-4 text-center py-16" style={{ color: "rgba(255,252,242,0.3)" }}>Nessuno slot configurato</div>
+            <div className="col-span-4 text-center py-16" style={{ color: "rgba(255,252,242,0.3)" }}>Nessuna sessione configurata</div>
           )}
         </div>
       )}

@@ -22,15 +22,15 @@ export default async function AdminDashboard() {
   const stats = [
     { label: "Membri totali", value: totalMembri, icon: "👥", href: "/admin/membri", accent: "#0d9488" },
     { label: "Abbonamenti attivi", value: abbonatiAttivi, icon: "📋", href: "/admin/abbonamenti", accent: "#16a34a" },
-    { label: "Slot orari", value: totalSlot, icon: "⏰", href: "/admin/orari", accent: "#eab308" },
+    { label: "Sessioni orarie", value: totalSlot, icon: "⏰", href: "/admin/orari", accent: "#eab308" },
     { label: "Lezioni oggi", value: bookingsOggi, icon: "🏃", href: "/admin/calendario", accent: "#84cc16" },
   ];
 
   const shortcuts = [
     { href: "/admin/membri", icon: "👥", title: "Gestione Membri", desc: "Aggiungi, visualizza e rimuovi i membri della palestra." },
     { href: "/admin/calendario", icon: "📅", title: "Calendario Lezioni", desc: "Visualizza tutte le lezioni programmate nel calendario mensile." },
-    { href: "/admin/orari", icon: "⏰", title: "Gestione Orari", desc: "Configura gli slot orari disponibili per le lezioni settimanali." },
-    { href: "/admin/abbonamenti", icon: "📋", title: "Abbonamenti", desc: "Crea e gestisci gli abbonamenti mensili con slot fissi." },
+    { href: "/admin/orari", icon: "⏰", title: "Gestione Orari", desc: "Configura le sessioni orarie disponibili per le lezioni settimanali." },
+    { href: "/admin/abbonamenti", icon: "📋", title: "Abbonamenti", desc: "Crea e gestisci gli abbonamenti mensili con sessioni fisse." },
   ];
 
   return (

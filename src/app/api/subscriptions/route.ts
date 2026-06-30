@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { generaBookingMensili } from "@/lib/booking";
+import { getSubscriptionConfig } from "@/lib/subscriptions";
 
 // GET /api/subscriptions
 export async function GET(req: NextRequest) {
@@ -45,11 +46,16 @@ export async function POST(req: NextRequest) {
   }
 
   const { userId, tipo, dataInizio, dataFine, slotIds } = await req.json();
-  if (!userId || !tipo || !dataInizio || !dataFine || !slotIds?.length) {
+  if (!userId || !tipo || !dataInizio || !dataFine || !Array.isArray(slotIds)) {
     return NextResponse.json({ error: "Dati mancanti" }, { status: 400 });
   }
 
-  const maxSlots = tipo === "DUE_LEZIONI" ? 2 : 3;
+  const config = getSubscriptionConfig(tipo);
+  if (!config) {
+    return NextResponse.json({ error: "Tipo abbonamento non valido" }, { status: 400 });
+  }
+
+  const maxSlots = config.maxSlots;
   if (slotIds.length !== maxSlots) {
     return NextResponse.json(
       { error: `Devi selezionare esattamente ${maxSlots} slot` },
@@ -57,26 +63,59 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Disattiva abbonamento precedente se esiste
-  await prisma.subscription.updateMany({
-    where: { userId, attivo: true },
-    data: { attivo: false },
-  });
+  const startDate = new Date(dataInizio);
+  const endDate = new Date(dataFine);
 
-  const sub = await prisma.subscription.create({
-    data: {
-      userId,
-      tipo,
-      dataInizio: new Date(dataInizio),
-      dataFine: new Date(dataFine),
-      attivo: true,
-      slots: {
-        create: slotIds.map((slotId: number) => ({ slotId })),
+  const sub = await prisma.$transaction(async (tx) => {
+    const existing = await tx.subscription.findUnique({ where: { userId } });
+
+    if (!existing) {
+      return tx.subscription.create({
+        data: {
+          userId,
+          tipo,
+          dataInizio: startDate,
+          dataFine: endDate,
+          attivo: true,
+          slots: {
+            create: slotIds.map((slotId: number) => ({ slotId })),
+          },
+        },
+      });
+    }
+
+    await tx.subscription.update({
+      where: { id: existing.id },
+      data: {
+        tipo,
+        dataInizio: startDate,
+        dataFine: endDate,
+        attivo: true,
       },
-    },
+    });
+
+    await tx.subscriptionSlot.deleteMany({ where: { subscriptionId: existing.id } });
+
+    if (slotIds.length > 0) {
+      await tx.subscriptionSlot.createMany({
+        data: slotIds.map((slotId: number) => ({ subscriptionId: existing.id, slotId })),
+      });
+    }
+
+    // Ricalcola le lezioni future in base al nuovo piano/slot.
+    await tx.booking.deleteMany({
+      where: {
+        subscriptionId: existing.id,
+        data: { gte: startDate },
+      },
+    });
+
+    return tx.subscription.findUniqueOrThrow({ where: { id: existing.id } });
   });
 
-  await generaBookingMensili(sub.id);
+  if (slotIds.length > 0) {
+    await generaBookingMensili(sub.id);
+  }
 
   return NextResponse.json(sub, { status: 201 });
 }

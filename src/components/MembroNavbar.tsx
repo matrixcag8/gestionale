@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const navLinks = [
   { href: "/membro", label: "Home", icon: "⊞" },
@@ -12,6 +13,23 @@ const navLinks = [
 export default function MembroNavbar({ nome, cognome }: { nome: string; cognome: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("membro-theme");
+    const initial = saved === "light" || saved === "dark" ? saved : "dark";
+    setTheme(initial);
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.remove("membro-theme-dark", "membro-theme-light");
+    document.body.classList.add(theme === "light" ? "membro-theme-light" : "membro-theme-dark");
+    window.localStorage.setItem("membro-theme", theme);
+
+    return () => {
+      document.body.classList.remove("membro-theme-dark", "membro-theme-light");
+    };
+  }, [theme]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -43,13 +61,27 @@ export default function MembroNavbar({ nome, cognome }: { nome: string; cognome:
             <span>👤</span> {nome} {cognome}
           </div>
 
-          <button
-            onClick={logout}
-            className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all shrink-0"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.24)", color: "#f87171" }}
-          >
-            Esci
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
+              style={theme === "light"
+                ? { background: "rgba(15,23,42,0.08)", border: "1px solid rgba(15,23,42,0.18)", color: "#0f172a" }
+                : { background: "rgba(250,250,249,0.08)", border: "1px solid rgba(250,250,249,0.16)", color: "#fffcf2" }
+              }
+              title="Cambia tema"
+            >
+              {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+            </button>
+
+            <button
+              onClick={logout}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.24)", color: "#f87171" }}
+            >
+              Esci
+            </button>
+          </div>
         </div>
 
         <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
@@ -63,9 +95,13 @@ export default function MembroNavbar({ nome, cognome }: { nome: string; cognome:
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all no-underline whitespace-nowrap"
                   style={{
                     background: active ? "rgba(132,204,22,0.12)" : "transparent",
-                    color: active ? "#84cc16" : "rgba(250,250,249,0.65)",
+                    color: active ? "#84cc16" : theme === "light" ? "rgba(15,23,42,0.75)" : "rgba(250,250,249,0.65)",
                     borderBottom: active ? "2px solid #84cc16" : "2px solid transparent",
-                    border: active ? "1px solid rgba(132,204,22,0.28)" : "1px solid rgba(250,250,249,0.08)",
+                    border: active
+                      ? "1px solid rgba(132,204,22,0.28)"
+                      : theme === "light"
+                      ? "1px solid rgba(15,23,42,0.12)"
+                      : "1px solid rgba(250,250,249,0.08)",
                   }}
                 >
                   <span className="text-xs">{l.icon}</span> {l.label}

@@ -6,6 +6,7 @@ import { it } from "date-fns/locale";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { GIORNI } from "@/lib/booking";
 import MembroNotifications from "@/components/MembroNotifications";
+import { getLessonPackTotalFromType, getWeeklyLimitFromType } from "@/lib/subscriptions";
 
 export default async function MembroDashboard() {
   const session = await getSession();
@@ -36,29 +37,42 @@ export default async function MembroDashboard() {
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  const weeklyBookedLessons = await prisma.booking.count({
-    where: {
-      subscription: { userId: session.userId },
-      stato: { in: ["CONFERMATO", "PRESENTE"] },
-      data: {
-        gte: weekStart,
-        lte: weekEnd,
-      },
-    },
-  });
+  const [weeklyBookedLessons, totalBookedLessons] = user?.subscription
+    ? await Promise.all([
+        prisma.booking.count({
+          where: {
+            subscription: { userId: session.userId },
+            stato: { in: ["CONFERMATO", "PRESENTE"] },
+            data: {
+              gte: weekStart,
+              lte: weekEnd,
+            },
+          },
+        }),
+        prisma.booking.count({
+          where: {
+            subscription: { userId: session.userId },
+            stato: { in: ["CONFERMATO", "PRESENTE"] },
+          },
+        }),
+      ])
+    : [0, 0];
 
-  const weeklyLimit = user?.subscription?.tipo === "TRE_LEZIONI" ? 3 : user?.subscription?.tipo === "DUE_LEZIONI" ? 2 : 0;
-  const lezioniRimanenti = Math.max(0, weeklyLimit - weeklyBookedLessons);
+  const weeklyLimit = getWeeklyLimitFromType(user?.subscription?.tipo ?? "");
+  const lessonPackTotal = getLessonPackTotalFromType(user?.subscription?.tipo ?? "");
+  const lezioniRimanenti = lessonPackTotal !== null
+    ? Math.max(0, lessonPackTotal - totalBookedLessons)
+    : Math.max(0, weeklyLimit - weeklyBookedLessons);
   const slotFissiBloccati = user?.subscription?.slots.length ?? 0;
 
   return (
     <div>
       {/* Header */}
       <div className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,252,242,0.4)" }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
           Area personale
         </p>
-        <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: "#fffcf2" }}>
+        <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--text)" }}>
           Ciao, {session.nome}! 👋
         </h1>
       </div>
@@ -67,50 +81,50 @@ export default async function MembroDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Prossima lezione */}
         <div className="glass p-5" style={{ borderLeft: "3px solid #0d9488" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Prossima lezione</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Prossima lezione</p>
           {prossimaLezione ? (
             <>
               <p className="text-lg font-extrabold capitalize" style={{ color: "#60a5fa" }}>
                 {format(new Date(prossimaLezione.data), "EEEE dd MMM", { locale: it })}
               </p>
-              <p className="text-sm mt-0.5" style={{ color: "rgba(255,252,242,0.6)" }}>
+              <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
                 {prossimaLezione.slot.oraInizio} - {prossimaLezione.slot.oraFine}
               </p>
             </>
           ) : (
-            <p style={{ color: "rgba(255,252,242,0.4)" }}>Nessuna in programma</p>
+            <p style={{ color: "var(--text-muted)" }}>Nessuna in programma</p>
           )}
         </div>
 
         {/* Lezioni rimanenti e scadenza */}
         <div className="glass p-5" style={{ borderLeft: "3px solid #22c55e" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Lezioni rimanenti</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Lezioni rimanenti</p>
           {user?.subscription ? (
             <>
               <p className="text-3xl font-extrabold" style={{ color: "#4ade80" }}>
                 {lezioniRimanenti}
               </p>
-              <p className="text-xs mt-0.5" style={{ color: "rgba(255,252,242,0.45)" }}>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                 Scade: {format(new Date(user.subscription.dataFine), "dd MMMM yyyy", { locale: it })}
               </p>
             </>
           ) : (
-            <p style={{ color: "rgba(255,252,242,0.4)" }}>Nessun abbonamento</p>
+            <p style={{ color: "var(--text-muted)" }}>Nessun abbonamento</p>
           )}
         </div>
 
-        {/* Slot fissi bloccati */}
+        {/* Allenamenti settimanali */}
         <div className="glass p-5" style={{ borderLeft: "3px solid #a855f7" }}>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Slot fissi bloccati</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>Allenamenti settimanali</p>
           <p className="text-3xl font-extrabold" style={{ color: "#c084fc" }}>{slotFissiBloccati}</p>
-          <p className="text-xs mt-0.5" style={{ color: "rgba(255,252,242,0.4)" }}>Slot settimanali assegnati</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Lezioni programmate a settimana</p>
         </div>
       </div>
 
-      {/* Slot fissi */}
+      {/* Sessioni fisse */}
       {user?.subscription && (
         <div className="glass p-5 mb-6">
-          <h2 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(255,252,242,0.5)" }}>I tuoi slot fissi</h2>
+          <h2 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Le tue sessioni fisse</h2>
           <div className="flex flex-wrap gap-2">
             {user.subscription.slots.map((ss) => (
               <div
@@ -119,7 +133,7 @@ export default async function MembroDashboard() {
                 style={{ background: "rgba(13,148,136,0.12)", border: "1px solid rgba(13,148,136,0.25)", color: "#5eead4" }}
               >
                 <span style={{ color: "#5eead4", fontWeight: 700 }}>{GIORNI[ss.slot.giornoSettimana]}</span>
-                <span style={{ color: "rgba(250,250,249,0.55)" }}>{ss.slot.oraInizio}–{ss.slot.oraFine}</span>
+                <span style={{ color: "var(--text-muted)" }}>{ss.slot.oraInizio}–{ss.slot.oraFine}</span>
               </div>
             ))}
           </div>
@@ -133,9 +147,9 @@ export default async function MembroDashboard() {
           <div className="glass p-6 cursor-pointer">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-xl">📅</span>
-              <h2 className="font-bold text-base" style={{ color: "#fffcf2" }}>Il mio calendario</h2>
+              <h2 className="font-bold text-base" style={{ color: "var(--text)" }}>Il mio calendario</h2>
             </div>
-            <p className="text-sm" style={{ color: "rgba(255,252,242,0.5)" }}>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               Visualizza le tue lezioni e modifica gli orari
             </p>
           </div>
@@ -144,10 +158,10 @@ export default async function MembroDashboard() {
           <div className="glass p-6 cursor-pointer">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-xl">📋</span>
-              <h2 className="font-bold text-base" style={{ color: "#fffcf2" }}>Il mio abbonamento</h2>
+              <h2 className="font-bold text-base" style={{ color: "var(--text)" }}>Il mio abbonamento</h2>
             </div>
-            <p className="text-sm" style={{ color: "rgba(255,252,242,0.5)" }}>
-              Dettagli abbonamento e slot fissi
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              Dettagli abbonamento e sessioni fisse
             </p>
           </div>
         </Link>

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { GIORNI } from "@/lib/booking";
+import { SUBSCRIPTION_TYPES, getSubscriptionConfig, getSubscriptionLabel } from "@/lib/subscriptions";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -47,7 +48,7 @@ function AbbonamentiContent() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const maxSlots = tipo === "DUE_LEZIONI" ? 2 : 3;
+  const maxSlots = getSubscriptionConfig(tipo)?.maxSlots ?? 0;
 
   useEffect(() => {
     Promise.all([fetch("/api/members").then((r) => r.json()), fetch("/api/slots").then((r) => r.json())]).then(
@@ -84,7 +85,7 @@ function AbbonamentiContent() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedUserId) return;
-    if (selectedSlots.length !== maxSlots) {
+    if (maxSlots > 0 && selectedSlots.length !== maxSlots) {
       setMessage(`Seleziona esattamente ${maxSlots} slot`);
       return;
     }
@@ -98,13 +99,18 @@ function AbbonamentiContent() {
         tipo,
         dataInizio,
         dataFine,
-        slotIds: selectedSlots,
+        slotIds: maxSlots > 0 ? selectedSlots : [],
       }),
     });
-    const data = await res.json();
+    let data: { error?: string } = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: "Errore inatteso del server" };
+    }
     setSaving(false);
     if (!res.ok) {
-      setMessage(data.error);
+      setMessage(data.error || "Errore durante il salvataggio");
     } else {
       setMessage("✅ Abbonamento salvato e lezioni generate!");
       const mRes = await fetch("/api/members");
@@ -156,17 +162,17 @@ function AbbonamentiContent() {
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Tipo abbonamento</label>
               <div className="flex gap-4">
-                {["DUE_LEZIONI", "TRE_LEZIONI"].map((t) => (
-                  <label key={t} className="flex items-center gap-2 cursor-pointer">
+                {SUBSCRIPTION_TYPES.map((plan) => (
+                  <label key={plan.value} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
-                      value={t}
-                      checked={tipo === t}
-                      onChange={() => { setTipo(t); setSelectedSlots([]); }}
+                      value={plan.value}
+                      checked={tipo === plan.value}
+                      onChange={() => { setTipo(plan.value); setSelectedSlots([]); }}
                       className="accent-orange-500"
                     />
                     <span className="text-sm font-medium" style={{ color: "#fffcf2" }}>
-                      {t === "DUE_LEZIONI" ? "2 lezioni/settimana" : "3 lezioni/settimana"}
+                      {plan.label}
                     </span>
                   </label>
                 ))}
@@ -184,41 +190,47 @@ function AbbonamentiContent() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>
-                Slot fissi ({selectedSlots.length}/{maxSlots} selezionati)
-              </label>
-              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                {slotsByDay.map((g) => (
-                  <div key={g.index}>
-                    <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(255,252,242,0.3)" }}>{g.giorno}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {g.slots.map((s) => {
-                        const selected = selectedSlots.includes(s.id);
-                        const disabled = !selected && selectedSlots.length >= maxSlots;
-                        return (
-                          <button
-                            key={s.id}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => toggleSlot(s.id)}
-                            className="px-3 py-1 rounded-full text-xs font-semibold transition"
-                            style={selected
-                              ? { background: "rgba(132,204,22,0.2)", color: "#bef264", border: "1px solid rgba(132,204,22,0.4)" }
-                              : disabled
-                              ? { background: "rgba(255,252,242,0.04)", color: "rgba(255,252,242,0.2)", cursor: "not-allowed", border: "1px solid transparent" }
-                              : { background: "rgba(255,252,242,0.07)", color: "rgba(255,252,242,0.6)", border: "1px solid rgba(255,252,242,0.1)" }
-                            }
-                          >
-                            {s.oraInizio}–{s.oraFine}
-                          </button>
-                        );
-                      })}
+            {maxSlots > 0 ? (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>
+                  Sessioni fisse ({selectedSlots.length}/{maxSlots} selezionate)
+                </label>
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {slotsByDay.map((g) => (
+                    <div key={g.index}>
+                      <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(255,252,242,0.3)" }}>{g.giorno}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {g.slots.map((s) => {
+                          const selected = selectedSlots.includes(s.id);
+                          const disabled = !selected && selectedSlots.length >= maxSlots;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => toggleSlot(s.id)}
+                              className="px-3 py-1 rounded-full text-xs font-semibold transition"
+                              style={selected
+                                ? { background: "rgba(132,204,22,0.2)", color: "#bef264", border: "1px solid rgba(132,204,22,0.4)" }
+                                : disabled
+                                ? { background: "rgba(255,252,242,0.04)", color: "rgba(255,252,242,0.2)", cursor: "not-allowed", border: "1px solid transparent" }
+                                : { background: "rgba(255,252,242,0.07)", color: "rgba(255,252,242,0.6)", border: "1px solid rgba(255,252,242,0.1)" }
+                              }
+                            >
+                              {s.oraInizio}–{s.oraFine}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-xs px-3 py-2 rounded-lg" style={{ color: "rgba(255,252,242,0.55)", background: "rgba(255,252,242,0.04)", border: "1px solid rgba(255,252,242,0.08)" }}>
+                Questo piano non richiede sessioni fisse.
+              </div>
+            )}
 
             {message && (
               <div className={`text-sm p-3 rounded-xl ${message.startsWith("✅")
@@ -245,7 +257,7 @@ function AbbonamentiContent() {
               <div>
                 <div className="rounded-xl p-4 mb-4 space-y-2" style={{ background: "rgba(255,252,242,0.04)", border: "1px solid rgba(255,252,242,0.07)" }}>
                   {[
-                    { l: "Tipo", v: selectedMember.subscription.tipo === "DUE_LEZIONI" ? "2 lezioni/settimana" : "3 lezioni/settimana" },
+                    { l: "Tipo", v: getSubscriptionLabel(selectedMember.subscription.tipo) },
                     { l: "Inizio", v: format(new Date(selectedMember.subscription.dataInizio), "dd/MM/yyyy", { locale: it }) },
                     { l: "Fine", v: format(new Date(selectedMember.subscription.dataFine), "dd/MM/yyyy", { locale: it }) },
                   ].map(r => (
@@ -261,7 +273,7 @@ function AbbonamentiContent() {
                     </span>
                   </div>
                 </div>
-                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Slot fissi:</p>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(255,252,242,0.4)" }}>Sessioni fisse:</p>
                 <div className="space-y-1">
                   {selectedMember.subscription.slots.map((ss) => (
                     <div key={ss.slotId} className="text-sm flex gap-2" style={{ color: "rgba(255,252,242,0.65)" }}>

@@ -12,7 +12,7 @@ export default async function MembroLayout({
   if (session.role === "ADMIN") redirect("/admin");
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#1c1917" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       <MembroNavbar nome={session.nome} cognome={session.cognome} />
       <main
         className="flex-1 container mx-auto w-full px-3 sm:px-4 py-5 sm:py-8"
